@@ -11,7 +11,7 @@ from .dataloaders.base import BaseDataloader
 from .simulators.base import BaseSimulator
 
 
-def _compute_metrics(samples: list[Sample]) -> EvaluationOutput:
+def compute_metrics(samples: list[Sample]) -> EvaluationOutput:
     """Computes inter annotator, accuracy, and correlation metrics on assessed Samples.
 
     Args:
