@@ -1,0 +1,47 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "simulator_alignment"
+version = "0.0.1"
+description = "An investigation of the relationship between LLM judges and human assessors for search relevance assessment"
+authors = [
+  { name = "Paul Owoicho" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License"
+]
+dependencies = [
+    "matplotlib",
+    "mkdocs",
+    "numpy",
+    "pandas",
+    "pip",
+    "pytest",
+    "python-dotenv",
+    "ruff",
+    "scikit-learn",
+    "tqdm",
+    "jsonlines",
+    "scipy",
+    "freezegun"
+]
+requires-python = "~=3.13.0"
+
+
+[tool.ruff]
+line-length = 99
+src = ["simulator_alignment"]
+include = ["pyproject.toml", "simulator_alignment/**/*.py", "tests/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["I"]  # Add import sorting
+
+[tool.ruff.lint.isort]
+known-first-party = ["simulator_alignment"]
+force-sort-within-sections = true
+
