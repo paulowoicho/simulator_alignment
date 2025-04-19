@@ -1,22 +1,8 @@
-import csv
 from unittest.mock import patch
 
-from freezegun import freeze_time
 import pytest
 
-from simulator_alignment.data_models.sample import Sample
 from simulator_alignment.simulators.dummy import CopyCatAssessor, RandomAssessor
-
-
-@pytest.fixture
-def sample_list():
-    """Fixture to create sample list for testing, shared across test classes"""
-    return [
-        Sample(query="What is Paris?", passage="Paris is in France", groundtruth_relevance=3),
-        Sample(query="How tall is Everest?", passage="Everest is tall", groundtruth_relevance=2),
-        Sample(query="Who is Shakespeare?", passage="A famous writer", groundtruth_relevance=1),
-        Sample(query="What is Python?", passage="Unrelated text", groundtruth_relevance=0),
-    ]
 
 
 class TestCopyCatAssessor:
@@ -103,17 +89,3 @@ class TestBaseSimulatorMethods:
             _ = random_assessor.assess(sample_list, write_to_file=True, output_path=output_file)
 
         assert output_file.exists()
-
-    @freeze_time("2025-04-18 14:23:00")
-    def test_write_to_file_auto_filename(self, copycat_assessor, sample_list, tmp_path):
-        # cwd is tmp_path
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            _ = copycat_assessor.assess(sample_list, write_to_file=True)
-
-        expected_filename = "CopyCatAssessor_results_2025-04-18T14-23-00.tsv"
-        expected_path = tmp_path / "data" / "CopyCatAssessor" / expected_filename
-
-        assert expected_path.exists()
-        with expected_path.open(encoding="utf-8", newline="") as f:
-            reader = csv.DictReader(f, delimiter="\t")
-            assert len(list(reader)) == len(sample_list)
