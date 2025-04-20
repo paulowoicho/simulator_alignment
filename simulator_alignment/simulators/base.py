@@ -2,9 +2,16 @@ from abc import ABC, abstractmethod
 import csv
 from dataclasses import asdict, fields
 from datetime import datetime
+import logging
 from pathlib import Path
+from string import Template
+
+from openai import BadRequestError, OpenAI
+from retry import retry  # type: ignore[import-untyped]
 
 from ..data_models.sample import Sample
+
+logger = logging.getLogger(__name__)
 
 
 class BaseSimulator(ABC):
@@ -87,3 +94,68 @@ class BaseSimulator(ABC):
     def name(self):
         """Returns the class name."""
         return self.__class__.__name__
+
+
+class OpenAIPromptedSimulator(BaseSimulator):
+    """Base simulator for a subset of simulators that scores samples with OpenAI's GPT40 using a
+    provided prompt template.
+
+    Subclasses should set a prompt_template attribute that formats how the prompt is presented to
+    the model. They should also define a _parse_output method that extracts the score from the
+    model's outputs.
+    """
+
+    _PROMPT_TEMPLATE: str
+
+    def __init__(self, inference_engine: OpenAI, model_name: str = "gpt-4o") -> None:
+        if not getattr(self, "_PROMPT_TEMPLATE", None):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} must define a class-level _PROMPT_TEMPLATE."
+            )
+
+        if model_name != "gpt-4o":
+            logger.warning(
+                "This method was developed with gpt-4o. Using another model may affect performance."
+            )
+
+        self.inference_engine = inference_engine
+        self.model_name = model_name
+
+    @retry(tries=3, delay=0.1)
+    def _score_samples(self, samples: list[Sample]) -> list[Sample]:
+        for sample in samples:
+            user_content = Template(self._PROMPT_TEMPLATE).substitute(
+                query=sample.query, passage=sample.passage
+            )
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": user_content},
+            ]
+
+            try:
+                response = self.inference_engine.chat.completions.create(
+                    messages=messages,  # type: ignore[arg-type]
+                    model=self.model_name,
+                    max_tokens=100,
+                    temperature=0,
+                    top_p=1,
+                    frequency_penalty=0.5,
+                    presence_penalty=0,
+                )
+                output = (
+                    response.choices[0].message.content.lower()
+                    if response.choices[0].message.content
+                    else ""
+                )
+            except BadRequestError as e:
+                logger.error(f"Encountered {e} for {messages}, defaulting to empty string")
+                output = ""
+
+            score = self._parse_output(output)
+            sample.set_predicted_relevance(score)
+        return samples
+
+    @abstractmethod
+    def _parse_output(self, text: str) -> int:
+        """Helper method to parse out the relevance scores from the model's output."""
+        ...

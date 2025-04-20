@@ -21,21 +21,38 @@ logger = logging.getLogger(__name__)
 class Result(TypedDict):
     simulator: str
     dataloader: str
-    metrics: EvaluationOutput
+    metrics: list[EvaluationOutput]
 
 
 class ExperimentManager:
     """Runs one or more simulators against one or more datasets and returns metrics and charts that compare the simulators."""
 
-    def __init__(self, simulators: list[BaseSimulator], dataloaders: list[BaseDataloader]) -> None:
+    def __init__(
+        self,
+        simulators: list[BaseSimulator],
+        dataloaders: list[BaseDataloader],
+        splits: int | list[int] = 1,
+    ) -> None:
         """Creates an ExperimentManager instance.
 
         Args:
             simulators (list[BaseSimulator]): The simulators to compare.
             dataloaders (list[BaseDataloader]): The datasets to compare the simulators on.
+            splits (int | list[int], optional): Number of folds to use per dataloader.
+                - If an integer is provided, *every* dataloader uses that many folds.
+                - If a sequence of ints is provided, its length must equal the number of dataloaders,
+                    and each entry specifies the folds for the corresponding dataloader in order.
+                Defaults to 1 (i.e. one fold per dataloader, no split).
         """
         self.simulators = simulators
         self.dataloaders = dataloaders
+
+        if isinstance(splits, int):
+            self._splits = [splits] * len(dataloaders)
+        elif len(splits) == len(dataloaders):
+            self._splits = list(splits)
+        else:
+            raise ValueError(f"Expected {len(dataloaders)} fold‐counts but got {len(splits)}")
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         self.output_path = Path.cwd() / "reports" / f"experiment_results_{timestamp}"
@@ -50,16 +67,16 @@ class ExperimentManager:
         """
         results: list[Result] = []
         for simulator in tqdm.tqdm(self.simulators):
-            for dataloader in self.dataloaders:
+            for idx, dataloader in enumerate(self.dataloaders):
                 logger.info(f"Running {simulator.name} with {dataloader.name}")
 
                 # Averaging over multiple splits might introduce bias, so just do one split.
-                metrics = evaluate(simulator, dataloader, num_folds=1)
+                metrics = evaluate(simulator, dataloader, num_folds=self._splits[idx])
 
                 result = Result(
                     simulator=simulator.name,
                     dataloader=dataloader.name,
-                    metrics=metrics[0],
+                    metrics=metrics,
                 )
 
                 results.append(result)
@@ -94,8 +111,9 @@ class ExperimentManager:
         for result in results:
             row = {"simulator": result["simulator"], "dataloader": result["dataloader"]}
             # Flatten metrics
-            for metric, eval_output in result["metrics"].items():
-                row[metric] = eval_output["score"]  # type: ignore[index]
+            for idx, metrics in enumerate(result["metrics"], start=1):
+                for metric_name, scores in metrics.items():
+                    row[f"split_{idx}_{metric_name}"] = scores["score"]  # type: ignore[index]
             rows.append(row)
 
         return pd.DataFrame(rows)

@@ -16,21 +16,23 @@ classifiers = [
     "License :: OSI Approved :: MIT License"
 ]
 dependencies = [
-    "matplotlib",
-    "mkdocs",
-    "numpy",
-    "pandas",
-    "pip",
-    "pytest",
-    "python-dotenv",
-    "ruff",
-    "scikit-learn",
-    "tqdm",
-    "jsonlines",
-    "scipy",
-    "freezegun"
+    "matplotlib ~= 3.10.1",
+    "mkdocs ~= 1.6.1",
+    "numpy ~= 2.2.0",
+    "pandas ~= 2.2.3",
+    "pip ~= 25.0.1",
+    "pytest ~= 8.3.5",
+    "python-dotenv ~= 1.1.0",
+    "ruff ~= 0.11.6",
+    "scikit-learn ~= 1.6.1",
+    "tqdm ~= 4.67.1",
+    "jsonlines ~= 4.0.0",
+    "scipy ~= 1.15.2",
+    "vllm ~= 0.8.4",
+    "openai ~= 1.75.0",
+    "retry ~= 0.9.2",
 ]
-requires-python = "~=3.13.0"
+requires-python = "~=3.12.4"
 
 
 [tool.ruff]
