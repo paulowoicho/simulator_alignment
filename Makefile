@@ -66,6 +66,8 @@ create_environment:
 .PHONY: data
 data:
 	bash scripts/download_data.sh https://github.com/llm4eval/LLMJudge data data/llm_judge_benchmark
+	bash scripts/download_data.sh https://github.com/paulowoicho/simulator_alignment_data data/CAsT2022 data/CAsT2022
+	bash scripts/download_data.sh https://github.com/paulowoicho/simulator_alignment_data data/iKAT2023 data/iKAT2023
 
 
 #################################################################################
