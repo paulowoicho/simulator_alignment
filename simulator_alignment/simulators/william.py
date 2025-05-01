@@ -31,5 +31,8 @@ class WilliamUmbrela1(OpenAIPromptedSimulator):
     _PROMPT_TEMPLATE = _USER_PROMPT
 
     def _parse_output(self, text: str) -> int:
-        match = re.search(r"##o:\s*(\d+)", text.strip())
+        match = re.search(r"##final score:\s*(\d+)", text.strip())
         return int(match[1]) if match else 0
+
+
+class WilliamUmbrelaGPT4oMini(WilliamUmbrela1): ...

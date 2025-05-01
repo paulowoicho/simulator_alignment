@@ -2,6 +2,7 @@ from itertools import islice
 from math import ceil
 from typing import Iterator, cast
 
+import krippendorff  # type: ignore[import-untyped]
 from scipy.stats import kendalltau, spearmanr  # type: ignore[import-untyped]
 from sklearn.metrics import accuracy_score, cohen_kappa_score  # type: ignore[import-untyped]
 
@@ -26,6 +27,9 @@ def _compute_metrics(samples: list[Sample]) -> EvaluationOutput:
     accuracy = Score(score=accuracy_score(groundtruth, predictions))
 
     weighted_kappa = Score(score=cohen_kappa_score(groundtruth, predictions, weights="quadratic"))
+    cohen_kappa = Score(score=cohen_kappa_score(groundtruth, predictions))
+
+    krippendorff_alpha = Score(score=krippendorff.alpha([groundtruth, predictions]))
 
     spearman_stat, spearman_p = spearmanr(groundtruth, predictions)
     spearman_correlation = ScoreWithPValue(score=spearman_stat, p_value=spearman_p)
@@ -36,7 +40,9 @@ def _compute_metrics(samples: list[Sample]) -> EvaluationOutput:
     return EvaluationOutput(
         accuracy=accuracy,
         weighted_cohen_kappa=weighted_kappa,
+        cohen_kappa=cohen_kappa,
         spearman_correlation=spearman_correlation,
+        krippendorff_alpha=krippendorff_alpha,
         kendall_tau=kendall_tau,
     )
 
