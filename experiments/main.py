@@ -4,16 +4,26 @@ import logging
 from pathlib import Path
 from typing import TypedDict
 
+from dotenv import load_dotenv
 import matplotlib.pyplot as plt
+from openai import OpenAI
 import pandas as pd  # type: ignore[import-untyped]
 import tqdm  # type: ignore[import-untyped]
+from transformers.models.t5.modeling_t5 import T5ForConditionalGeneration
+from transformers.models.t5.tokenization_t5_fast import T5TokenizerFast
+from vllm import LLM
 
 from simulator_alignment.data_models.evaluation_output import EvaluationOutput
 from simulator_alignment.dataloaders.base import BaseDataloader
+from simulator_alignment.dataloaders.custom import CustomBenchmark
 from simulator_alignment.dataloaders.llm_judge_benchmark import LLMJudgeBenchmark
 from simulator_alignment.evaluator import evaluate
 from simulator_alignment.simulators.base import BaseSimulator
-from simulator_alignment.simulators.dummy import CopyCatAssessor, RandomAssessor
+from simulator_alignment.simulators.h2loo import H2looFewself
+from simulator_alignment.simulators.monot5 import MonoT5Simulator
+from simulator_alignment.simulators.olz import OlzGPT4o
+from simulator_alignment.simulators.trema import TREMA4Prompts, TREMASumDecompose
+from simulator_alignment.simulators.william import WilliamUmbrela1, WilliamUmbrelaGPT4oMini
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +62,7 @@ class ExperimentManager:
         elif len(splits) == len(dataloaders):
             self._splits = list(splits)
         else:
-            raise ValueError(f"Expected {len(dataloaders)} fold‐counts but got {len(splits)}")
+            raise ValueError(f"Expected {len(dataloaders)} fold-counts but got {len(splits)}")
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         self.output_path = Path.cwd() / "reports" / f"experiment_results_{timestamp}"
@@ -148,20 +158,36 @@ class ExperimentManager:
 
 
 if __name__ == "__main__":
-    simulators = [
-        RandomAssessor(),
-        CopyCatAssessor(),
-        RandomAssessor(min_val=1, max_val=2),
-        RandomAssessor(min_val=3, max_val=4),
+    load_dotenv()
+
+    openai_engine = OpenAI()
+    vllm_engine = LLM(model="meta-llama/Meta-Llama-3-8B-Instruct")
+
+    monoT5_model = T5ForConditionalGeneration.from_pretrained(
+        "castorini/monot5-base-msmarco-10k", device_map="auto", torch_dtype="auto"
+    )
+    monoT5_model.device("cuda:1")
+    monoT5_tokenizer = T5TokenizerFast.from_pretrained("castorini/monot5-base-msmarco-10k")
+
+    simulators: list[BaseSimulator] = [
+        MonoT5Simulator(model=monoT5_model, tokenizer=monoT5_tokenizer),
+        H2looFewself(inference_engine=openai_engine),
+        OlzGPT4o(inference_engine=openai_engine),
+        TREMA4Prompts(inference_engine=vllm_engine),
+        TREMASumDecompose(inference_engine=vllm_engine),
+        WilliamUmbrela1(inference_engine=openai_engine),
+        WilliamUmbrelaGPT4oMini(inference_engine=openai_engine, model_name="gpt-4o-mini"),
     ]
 
     dataloaders: list[BaseDataloader] = [
+        CustomBenchmark(dataset_path="data/CAsT2022/alignment_data.jsonl", name="CAsT2022"),
+        CustomBenchmark(dataset_path="data/iKAT2023/alignment_data.jsonl", name="iKAT2023"),
         LLMJudgeBenchmark(
             qrels_path="data/llm_judge_benchmark/llm4eval_dev_qrel_2024.txt",
             queries_path="data/llm_judge_benchmark/llm4eval_query_2024.txt",
             passages_path="data/llm_judge_benchmark/llm4eval_document_2024.jsonl",
-        )
+        ),
     ]
 
-    manager = ExperimentManager(simulators, dataloaders)
+    manager = ExperimentManager(simulators, dataloaders, splits=[1, 1, 5])
     manager.run_experiments()

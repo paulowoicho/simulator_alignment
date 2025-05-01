@@ -12,6 +12,8 @@ class ScoreWithPValue(TypedDict):
 
 class EvaluationOutput(TypedDict):
     accuracy: Score
+    cohen_kappa: Score
     weighted_cohen_kappa: Score
+    krippendorff_alpha: Score
     spearman_correlation: ScoreWithPValue
     kendall_tau: ScoreWithPValue

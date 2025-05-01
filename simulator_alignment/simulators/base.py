@@ -79,7 +79,6 @@ class BaseSimulator(ABC):
             output_path = Path(output_path)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        print(output_path)
 
         fieldnames = [field.name for field in fields(Sample)]
 

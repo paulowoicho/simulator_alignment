@@ -780,6 +780,18 @@ wheels = [
 ]
 
 [[package]]
+name = "krippendorff"
+version = "0.8.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ce/fc/a216ab428e10357fda0cea2d56e9a3728feecb54e32af6cd7e1f894d39e3/krippendorff-0.8.1.tar.gz", hash = "sha256:a8f73d87411a69b2ada62ce60573e1b99388bb084c8c0fa7b4d3598edcf3c0be", size = 24160 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/4f/019ebcd010b4e8bba59db099462155d78d928652b99958b10fcac700c4c5/krippendorff-0.8.1-py3-none-any.whl", hash = "sha256:afd9ba1adf8866f567abb643312aedc92d39b5b8612f99b68998508e3591c437", size = 18182 },
+]
+
+[[package]]
 name = "lark"
 version = "1.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2087,6 +2099,7 @@ version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "jsonlines" },
+    { name = "krippendorff" },
     { name = "matplotlib" },
     { name = "mkdocs" },
     { name = "numpy" },
@@ -2106,6 +2119,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "jsonlines", specifier = "~=4.0.0" },
+    { name = "krippendorff", specifier = "~=0.8.1" },
     { name = "matplotlib", specifier = "~=3.10.1" },
     { name = "mkdocs", specifier = "~=1.6.1" },
     { name = "numpy", specifier = "~=2.2.0" },

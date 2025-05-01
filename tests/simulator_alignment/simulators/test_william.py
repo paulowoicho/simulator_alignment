@@ -7,9 +7,9 @@ class TestWilliamUmbrela1:
     def test_william_umbrela1_assess(self, sample_list, mock_openai_engine):
         """Test that the WilliamUmbrela1 simulator parses responses correctly."""
         outputs = [
-            "##o: 3",
-            "##o: 2",
-            "##o: 1",
+            "##final score: 3",
+            "##final score: 2",
+            "##final score: 1",
             "#4",
         ]
         mock_openai_engine.chat.completions.create.side_effect = [
