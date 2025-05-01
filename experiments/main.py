@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 from openai import OpenAI
 import pandas as pd  # type: ignore[import-untyped]
+import torch
 import tqdm  # type: ignore[import-untyped]
 from transformers.models.t5.modeling_t5 import T5ForConditionalGeneration
 from transformers.models.t5.tokenization_t5_fast import T5TokenizerFast
@@ -24,7 +25,6 @@ from simulator_alignment.simulators.monot5 import MonoT5Simulator
 from simulator_alignment.simulators.olz import OlzGPT4o
 from simulator_alignment.simulators.trema import TREMA4Prompts, TREMASumDecompose
 from simulator_alignment.simulators.william import WilliamUmbrela1, WilliamUmbrelaGPT4oMini
-import torch
 
 logger = logging.getLogger(__name__)
 
@@ -164,10 +164,10 @@ if __name__ == "__main__":
     openai_engine = OpenAI()
     vllm_engine = LLM(model="meta-llama/Meta-Llama-3-8B-Instruct")
 
-    monoT5_model = T5ForConditionalGeneration.from_pretrained(
-        "castorini/monot5-base-msmarco-10k"
-    )
-    monoT5_model = monoT5_model.to("cuda" if torch.cuda.is_available() else "cpu")
+    monoT5_model = T5ForConditionalGeneration.from_pretrained("castorini/monot5-base-msmarco-10k")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info(f"Using device: {device}")
+    monoT5_model = monoT5_model.to(device)
     monoT5_tokenizer = T5TokenizerFast.from_pretrained("castorini/monot5-base-msmarco-10k")
 
     simulators: list[BaseSimulator] = [
