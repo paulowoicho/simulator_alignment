@@ -24,6 +24,7 @@ from simulator_alignment.simulators.monot5 import MonoT5Simulator
 from simulator_alignment.simulators.olz import OlzGPT4o
 from simulator_alignment.simulators.trema import TREMA4Prompts, TREMASumDecompose
 from simulator_alignment.simulators.william import WilliamUmbrela1, WilliamUmbrelaGPT4oMini
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -164,9 +165,9 @@ if __name__ == "__main__":
     vllm_engine = LLM(model="meta-llama/Meta-Llama-3-8B-Instruct")
 
     monoT5_model = T5ForConditionalGeneration.from_pretrained(
-        "castorini/monot5-base-msmarco-10k", device_map="auto", torch_dtype="auto"
+        "castorini/monot5-base-msmarco-10k"
     )
-    monoT5_model.device("cuda:1")
+    monoT5_model = monoT5_model.to("cuda" if torch.cuda.is_available() else "cpu")
     monoT5_tokenizer = T5TokenizerFast.from_pretrained("castorini/monot5-base-msmarco-10k")
 
     simulators: list[BaseSimulator] = [
